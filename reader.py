@@ -285,33 +285,6 @@ for df_row in results3:
 
 
 
-        
-
-#             iter_items = []
-#             pattern = re.compile(r'\S+')
-#             matches = pattern.finditer(iteration)
-#             for match in matches:
-#                 iter_items.append(match.group(0))   
-#  #           if k > 0:
-#             iter_items = iter_items[2:]
-#             #put all iterations together here
-#             all_iter.extend(iter_items)
-#             k += 1
-
-
-       
-# #add all molecule names as column headers
-# column_headers = []
-# for sublist in all_headers:
-#     for item in sublist:
-#         column_headers.append(item)
-# for column in column_headers:
-#     df[column] = ""            
-# #split iterations
-# xn = np.array_split(all_iter, tmax)
-
-
-
 
 
 
