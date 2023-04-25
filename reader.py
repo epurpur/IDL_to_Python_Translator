@@ -323,8 +323,8 @@ for i, line in enumerate(myFile):
 lines_container = []  
 
 # this determines the number of lines grabbed after each instance of "time evolution of fractional abundance". The +2 is because the first two lines are intro lines and will be discarded later
-# iterations = tmax+2   
-iterations = 5
+iterations = tmax+2   
+# iterations = 5
 
 
 count = 1  # this helps me determine how many instances of "TIME EVOLUTION..." line. Also helps determine how many chunks to break data into later in chunk_into function
@@ -404,19 +404,20 @@ for i in results2:
     final.append(i[1])    
 
     # all the items with a length of 1,2,3 or 4 are the IT column value. I want to drop this value and also drop the value after it as this is the t(yr) column value.
-    ###############START HERE
-    # for x in i:
+    for x in i:
         
-    #     # this is looking for the length of each item. 
-    #     if len(x) != 1 and len(x) != 2 and len(x) != 3 and len(x) != 4:
-    #         final.append(x)
-    #     elif len(x) == 11 and x[0] == "-":
-    #         final.append(x)
+        # this is looking for the length of each item. 
+        if len(x) != 1 and len(x) != 2 and len(x) != 3 and len(x) != 4 and len(x) != 11:
+            final.append(x)
+        # in the case an item's length is 11, we want to keep it if the first character is "-"
+        elif x[0] == "-":
+            final.append(x)
+            
     
-    # results3.append(final)
+    results3.append(final)
 
 
 # append each item as a row in dataframe
-# for df_row in results3:
-#     mantle_df.loc[len(fractional_abundance_df)] = df_row
+for df_row in results3:
+    mantle_df.loc[len(mantle_df)] = df_row
 
