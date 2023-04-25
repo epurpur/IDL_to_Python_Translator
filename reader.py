@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 import re
+import textwrap
 filepath='op_output.d'
 
 
@@ -270,26 +271,152 @@ for i in results2:
     
   
 # append each item as a row in dataframe
-for df_row in results3:
-    fractional_abundance_df.loc[len(fractional_abundance_df)] = df_row
+# for df_row in results3:
+#     fractional_abundance_df.loc[len(fractional_abundance_df)] = df_row
         
 
     
 
+###########################################################
+################# READING MANTLE DATA #####################
+###########################################################
+
+
+# create dataframe for final abundance data
+mantle_df = pd.DataFrame() 
+
+all_headers = []
+
+myFile = open(filepath).readlines()
+
+for i, line in enumerate(myFile):
+ 
+    if "TIME EVOLUTION OF MANTLE" in line:
+        
+        ##### READING IN HEADERS (names of molecules) ######
+        
+        # get header row for each group of molecules
+        header_line = myFile[i+2]
+        # remove newline character from end of header_line
+        header_line = header_line[2:-1]   
+        header_items = []
+        # use regular expression to remove empty items from header_items
+        pattern = re.compile(r'\S+')
+        matches = pattern.finditer(header_line)
+        for match in matches:
+            header_items.append(match.group(0))            
+        all_headers.append(header_items)
+        
+        ### CREATING COLUMN HEADERS ###
+        
+        #add all molecule names as column headers
+        column_headers = []
+        for sublist in all_headers:
+            for item in sublist:
+                column_headers.append(item)
+        for column in column_headers:
+            mantle_df[column] = "" 
 
 
 
+# lines_container holds the lines from the file. This will hold each line of the file as a list item. the length of container will be the number of iterations (tmax + 2) x number of elements (1390 I think) 
+lines_container = []  
+
+# this determines the number of lines grabbed after each instance of "time evolution of fractional abundance". The +2 is because the first two lines are intro lines and will be discarded later
+# iterations = tmax+2   
+iterations = 5
 
 
+count = 1  # this helps me determine how many instances of "TIME EVOLUTION..." line. Also helps determine how many chunks to break data into later in chunk_into function
+with open(filepath) as myFile:
+    
+    for line in myFile:
+                
+        # there are 32 instances of this line in the file
+        if "TIME EVOLUTION OF MANTLE" in line:
+            
+            print(count, line)
+            count +=1
+            for i in range(iterations):
+                lines_container.append(next(myFile))
 
 
+# split container into n number of chunks. THIS SHOULD PROBABLY ALWAYS BE "COUNT - 1" unless there is a specific reason not to
+lines_container = chunk_into_n(lines_container, count-1)
+
+# remove first two items from each item in container. These two items are the empty lines described earlier
+lines_container = [i[2:] for i in lines_container]
+
+# The zip() function is used to group the corresponding elements of each iterable into tuples. The * operator unpacks the iterables in container and passes them as separate arguments to zip()."""
+results = list(zip(*lines_container))
+#Results is currently a list of tuples. Convert list of tuples to list of lists
+results = [list(t) for t in results]
+
+results2 = []
+# this will be different than 'FRACTIONAL ABUNDANCE' above. Some of these values are split by spaces and others are split by a - with no space between.
+
+for i in results:
+    
+    # iter_items colects the individual items from each line after they are split on spaces below by the regular expression. 
+    iter_items = []
+    
+    for x in i:
+        # this is using a regular expression to search for one or more NOT whitespace characters
+        pattern = re.compile(r'\S+')
+        matches = pattern.finditer(x)
+        
+        for match in matches:
+            # need to account for several situations. Not all values are cleanly separated by a space. Some are just run-on text with - as the separator. 
+            if len(match.group(0)) > 11:
+                # print(match.group(0))
+                # if the first number is negative, need to split on the 11th character
+                if match.group(0)[0] == '-':
+                    split_items = textwrap.wrap(match.group(0), 11)
+                    #split_items is a list. append items to iter_items
+                    for item in split_items:
+                        iter_items.append(item)
+                else:
+                    # if the first number is positive, need to split on the 10th character the first time, after that split on the 11th character
+                    item1 = match.group(0)[:10]
+                    iter_items.append(item1)
+                    # the rest of the items will be negative. Group them in later_items, from the 11th position until the end. Then split later_items at the 11th item as I did before with textwrap.wrap
+                    later_items = match.group(0)[10:]
+                    split_items = textwrap.wrap(later_items, 11)
+                    #split_items is a list. append items to iter_items
+                    for item in split_items:
+                        iter_items.append(item)
+            else:
+                iter_items.append(match.group(0))
+                    
+    results2.append(iter_items)
 
 
+# Now, need to delete repeated IT and t(yr) value form results2. Keep only the first of those
+# basically, all the digits have a length of 10. If a value does not have a length of 10 (which the iteration and the t(yr) values do not), it is dropped)
+results3 = []
+
+for i in results2:
+    #final holds the data which will be added to the df above
+    final = []
+    
+    # i[0] and i[1] are the IT and t(yr) column value. Append these up front before values are dropped
+    final.append(i[0])
+    final.append(i[1])    
+
+    # all the items with a length of 1,2,3 or 4 are the IT column value. I want to drop this value and also drop the value after it as this is the t(yr) column value.
+    ###############START HERE
+    # for x in i:
+        
+    #     # this is looking for the length of each item. 
+    #     if len(x) != 1 and len(x) != 2 and len(x) != 3 and len(x) != 4:
+    #         final.append(x)
+    #     elif len(x) == 11 and x[0] == "-":
+    #         final.append(x)
+    
+    # results3.append(final)
 
 
-
-
-
-
-
+# append each item as a row in dataframe
+# for df_row in results3:
+#     mantle_df.loc[len(fractional_abundance_df)] = df_row
 
